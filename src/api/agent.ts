@@ -8,11 +8,22 @@ export interface ChatResponse {
   conversationId: string;
 }
 
-const BASE_URL = 'http://localhost:3000';
+// 后端地址来自 Vite 环境变量，未配置时只连接本机开发服务。
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
-// 自动获取一个测试 Token 用于聊天交互
+// 自动注册固定账号只适用于本地演示，生产环境必须接入真实登录流程。
 export async function getTestToken(): Promise<string> {
-  const credentials = { username: 'agent_tester', password: 'password123' };
+  if (!import.meta.env.DEV) {
+    throw new Error('生产构建未接入用户登录，已禁止自动创建演示账号');
+  }
+
+  const credentials = {
+    username: import.meta.env.VITE_DEMO_USERNAME,
+    password: import.meta.env.VITE_DEMO_PASSWORD,
+  };
+  if (!credentials.username || !credentials.password) {
+    throw new Error('请先在本地环境配置 VITE_DEMO_USERNAME 和 VITE_DEMO_PASSWORD');
+  }
 
   // 尝试登录
   let res = await fetch(`${BASE_URL}/auth/login`, {
@@ -23,17 +34,24 @@ export async function getTestToken(): Promise<string> {
 
   // 如果登录失败可能是用户不存在，我们尝试先注册一个
   if (!res.ok) {
-    await fetch(`${BASE_URL}/users/register`, {
+    const registerResponse = await fetch(`${BASE_URL}/users/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials),
     });
+    if (!registerResponse.ok && registerResponse.status !== 409) {
+      throw new Error('演示账号注册失败');
+    }
     // 重新登录
     res = await fetch(`${BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials),
     });
+  }
+
+  if (!res.ok) {
+    throw new Error('演示账号登录失败');
   }
 
   const json = await res.json();

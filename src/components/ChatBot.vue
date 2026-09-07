@@ -75,8 +75,9 @@ import { sendChatMessage, getTestToken, type ChatMessage } from '../api/agent';
 
 const isLoading = ref(false);
 const inputMsg = ref('');
+// 欢迎语必须准确说明“匹配已有图片”，避免把本地检索描述成文生图。
 const messages = ref<ChatMessage[]>([
-  { role: 'ai', content: '您好！我是您的 AI Agent 引擎。此项目现已完成 **RAG 检索式生图体系**的构建，所有商城购物组件已全部下线卸载。\n\n您可以对我用自然语言下达指令，例如：\n> "请帮我生成一张帅气的动作美少女图片"\n> "我想要看唯美治愈的星空或者是海滩夏日，有存货吗？"' }
+  { role: 'ai', content: '你好！这是一个 **Gemini 关键词提取 + 本地图库匹配**实验。它不会生成新图片，而会从已有示例图库中返回标签最接近的一张。\n\n你可以这样描述：\n> "帮我找一张帅气的动作少女图片"\n> "我想看唯美治愈的星空或海滩夏日"' }
 ]);
 const inputRef = shallowRef<HTMLTextAreaElement | null>(null);
 const messagesContainer = shallowRef<HTMLDivElement | null>(null);
